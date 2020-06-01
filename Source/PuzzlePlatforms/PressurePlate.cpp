@@ -2,7 +2,10 @@
 
 
 #include "PressurePlate.h"
+
 #include "Components/BoxComponent.h"
+
+#include "MovingPlatform.h"
 // Sets default values
 APressurePlate::APressurePlate()
 {
@@ -12,13 +15,17 @@ APressurePlate::APressurePlate()
 	TriggerVolume = CreateDefaultSubobject<UBoxComponent>(TEXT("TriggerVolume"));
 	if (!ensure(TriggerVolume != nullptr)) return;
 	RootComponent = TriggerVolume;
+
+	TriggerVolume->OnComponentBeginOverlap.AddDynamic(this, &APressurePlate::OnOverlapBegin);
+	TriggerVolume->OnComponentEndOverlap.AddDynamic(this, &APressurePlate::OnOverlapEnd);
 }
 
 // Called when the game starts or when spawned
 void APressurePlate::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
+	//TriggerVolume->OnComponentBeginOverlap.AddDynamic(this, &APressurePlate::OnOverlapBegin);
 }
 
 // Called every frame
@@ -26,5 +33,21 @@ void APressurePlate::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+}
+
+void APressurePlate::OnOverlapBegin(UPrimitiveComponent * OverlappedComp, AActor * OtherActor, UPrimitiveComponent * OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult)
+{
+	for (AMovingPlatform* Platform : PlatformsToTrigger)
+	{
+		Platform->AddActiveTrigger();
+	}
+}
+
+void APressurePlate::OnOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+	for (AMovingPlatform* Platform : PlatformsToTrigger)
+	{
+		Platform->RemoveActiveTrigger();
+	}
 }
 
